@@ -5,6 +5,8 @@ backend:
     path: functions
     language:
         name: js
+    scripts:
+      deploy: npm install
     functions:
         - name: get-all-conversations
           path: .
