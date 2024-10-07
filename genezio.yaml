@@ -1,0 +1,20 @@
+name: chat-app
+region: us-east-1
+yamlVersion: 2
+backend:
+    path: functions
+    language:
+        name: js
+    functions:
+        - name: get-all-conversations
+          path: .
+          entry: backend.mjs
+          handler: get_all_conversations_handler
+        - name: get-conversation
+          path: .
+          entry: backend.mjs
+          handler: get_conversation_handler
+        - name: put-message
+          path: .
+          entry: backend.mjs
+          handler: put_message_handler
