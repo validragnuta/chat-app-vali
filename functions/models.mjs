@@ -1,9 +1,4 @@
-// models.mjs
-
 import mongoose from 'mongoose';
-
-// MongoDB connection URL
-const mongoUrl = process.env.CHAT_APP_DATABASE_URL;
 
 // Mongoose schemas
 const conversationSchema = new mongoose.Schema({
@@ -23,7 +18,7 @@ const Message = mongoose.model('Message', messageSchema);
 // Connect to MongoDB
 export const connectToDatabase = async () => {
     if (mongoose.connection.readyState === 0) {
-        await mongoose.connect(mongoUrl);
+        await mongoose.connect(process.env.CHAT_APP_DATABASE_URL);
     }
 };
 
