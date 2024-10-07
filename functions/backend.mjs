@@ -9,9 +9,9 @@ const mockConversations = [
 ];
 
 const mockMessages = [
-    { id: "1", text: "Hello from Conversation 1!", conversationId: "1" },
-    { id: "2", text: "Hi there, how are you?", conversationId: "1" },
-    { id: "3", text: "Hello from Conversation 2!", conversationId: "2" },
+    { id: "1", text: "Hello from Conversation 1!", agent:"ai", conversationId: "1" },
+    { id: "2", text: "Hi there, how are you?", agent:"human", conversationId: "1" },
+    { id: "3", text: "Hello from Conversation 2!", agent:"ai", conversationId: "2" },
 ];
 
 // GET /conversations

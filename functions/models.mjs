@@ -7,6 +7,7 @@ const conversationSchema = new mongoose.Schema({
 
 const messageSchema = new mongoose.Schema({
     conversationId: String,
+    agent: String, // ai or human
     text: String,
     createdAt: { type: Date, default: Date.now },
 });

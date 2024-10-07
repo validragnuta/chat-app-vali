@@ -1,5 +1,17 @@
 import mongoose from 'mongoose';
 
+// Mongoose schemas
+const conversationSchema = new mongoose.Schema({
+    name: String,
+});
+
+const messageSchema = new mongoose.Schema({
+    conversationId: String,
+    agent: String, // ai or human
+    text: String,
+    createdAt: { type: Date, default: Date.now },
+});
+
 // Connect to MongoDB
 export const connectToDatabase = async () => {
     const dbUrl = process.env.CHAT_APP_DATABASE_URL;
@@ -9,17 +21,6 @@ export const connectToDatabase = async () => {
     await mongoose.connect(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true });
 };
 
-// Define Conversation schema and model
-const conversationSchema = new mongoose.Schema({
-    name: { type: String, required: true }
-});
-
 export const Conversation = mongoose.model('Conversation', conversationSchema);
-
-// Define Message schema and model
-const messageSchema = new mongoose.Schema({
-    text: { type: String, required: true },
-    conversation_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation' }
-});
 
 export const Message = mongoose.model('Message', messageSchema);
