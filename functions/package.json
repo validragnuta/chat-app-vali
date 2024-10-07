@@ -10,7 +10,6 @@
     "license": "ISC",
     "description": "",
     "dependencies": {
-        "mongoose": "^8.7.0",
-        "pg": "^8.13.0"
+        "mongoose": "^8.7.0"
     }
 }
