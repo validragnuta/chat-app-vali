@@ -1,20 +1,24 @@
 import express from 'express';
-import pg from 'pg';
 import serverless from 'serverless-http';
 import cors from "cors";
-
-const { Client } = pg;
+import { connectToDatabase, Conversation, Message } from './models.mjs'; // Import models
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Helper function to get the database client
-const getDbClient = () => {
-    const dbUrl = process.env.CHAT_APP_DATABASE_URL;
-    return dbUrl ? new Client({ connectionString: dbUrl }) : null;
-};
+// Mock data
+const mockConversations = [
+    { id: 1, name: "conv-123456" },
+    { id: 2, name: "conv-567890" },
+];
 
+const mockMessages = (conversationId) => [
+    { id: 1, text: "Hello!", conversation_id: conversationId },
+    { id: 2, text: "How's it going?", conversation_id: conversationId },
+];
+
+// Health check route
 app.get('/', (req, res) => {
     return res.status(200).json({ message: "Hello from the backend!" });
 });
@@ -24,24 +28,18 @@ app.get('/conversations', async (req, res) => {
     console.log("Fetching all conversations");
 
     let conversations;
-    const client = getDbClient();
 
-    if (client) {
-        await client.connect();
-        try {
-            const result = await client.query('SELECT * FROM conversations');
-            conversations = result.rows;
-        } catch (error) {
-            console.error("Database error:", error);
-            return res.status(500).json({ message: "Error fetching conversations" });
-        } finally {
-            await client.end();
+    try {
+        if (process.env.CHAT_APP_DATABASE_URL) {
+            await connectToDatabase();
+            conversations = await Conversation.find(); // Fetch all conversations from MongoDB
+        } else {
+            console.warn("No database URL provided, returning mock data.");
+            conversations = mockConversations; // Use mock data if no DB URL is present
         }
-    } else {
-        conversations = [
-            { id: 1, name: "conv-123456" },
-            { id: 2, name: "conv-567890" },
-        ];
+    } catch (error) {
+        console.warn("Could not connect to the database, returning mock data.", error);
+        conversations = mockConversations; // Use mock data if DB connection fails
     }
 
     return res.status(200).json({ conversations });
@@ -53,24 +51,18 @@ app.get('/conversations/:conversationId/messages', async (req, res) => {
 
     const conversationId = req.params.conversationId;
     let messages;
-    const client = getDbClient();
 
-    if (client) {
-        await client.connect();
-        try {
-            const result = await client.query('SELECT * FROM messages WHERE conversation_id = $1', [conversationId]);
-            messages = result.rows;
-        } catch (error) {
-            console.error("Database error:", error);
-            return res.status(500).json({ message: "Error fetching messages" });
-        } finally {
-            await client.end();
+    try {
+        if (process.env.CHAT_APP_DATABASE_URL) {
+            await connectToDatabase();
+            messages = await Message.find({ conversation_id: conversationId }); // Fetch messages from MongoDB
+        } else {
+            console.warn("No database URL provided, returning mock data.");
+            messages = mockMessages(conversationId); // Use mock data if no DB URL is present
         }
-    } else {
-        messages = [
-            { id: 1, text: "Hello!", conversation_id: conversationId },
-            { id: 2, text: "How's it going?", conversation_id: conversationId },
-        ];
+    } catch (error) {
+        console.warn("Could not connect to the database, returning mock data.", error);
+        messages = mockMessages(conversationId); // Use mock data if DB connection fails
     }
 
     return res.status(200).json({ messages });
@@ -82,20 +74,18 @@ app.post('/conversations/:conversationId/messages', async (req, res) => {
 
     const conversationId = req.params.conversationId;
     const { message } = req.body;
-    const client = getDbClient();
 
-    if (client) {
-        await client.connect();
-        try {
-            await client.query('INSERT INTO messages (text, conversation_id) VALUES ($1, $2)', [message, conversationId]);
-        } catch (error) {
-            console.error("Database error:", error);
-            return res.status(500).json({ message: "Error adding message" });
-        } finally {
-            await client.end();
+    try {
+        if (process.env.CHAT_APP_DATABASE_URL) {
+            await connectToDatabase();
+            const newMessage = new Message({ text: message, conversation_id: conversationId });
+            await newMessage.save(); // Save the message to MongoDB
+        } else {
+            console.log("Mock: Message added", message);
         }
-    } else {
-        console.log("Mock: Message added", message);
+    } catch (error) {
+        console.error("Database error:", error);
+        return res.status(500).json({ message: "Error adding message" });
     }
 
     return res.status(200).json({ message: "Message added successfully" });
