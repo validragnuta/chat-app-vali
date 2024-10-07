@@ -15,7 +15,7 @@ const mockMessages = [
 
 // GET /conversations
 export const get_all_conversations_handler = async (event) => {
-    if (event.httpMethod === 'OPTIONS') {
+    if (event.requestContext && event.requestContext.http && event.requestContext.http.method === 'OPTIONS') {
         console.log("CORS preflight request success");
         return {
             statusCode: 200,
@@ -65,7 +65,7 @@ export const get_all_conversations_handler = async (event) => {
 
 // GET /conversations/{conversationId}
 export const get_conversation_handler = async (event) => {
-    if (event.httpMethod === 'OPTIONS') {
+    if (event.requestContext && event.requestContext.http && event.requestContext.http.method === 'OPTIONS') {
         console.log("CORS preflight request success");
         return {
             statusCode: 200,
@@ -119,7 +119,8 @@ export const get_conversation_handler = async (event) => {
 
 // PUT /conversations/{conversationId}/messages
 export const put_message_handler = async (event) => {
-    if (event.httpMethod === 'OPTIONS') {
+    console.log(event);
+    if (event.requestContext && event.requestContext.http && event.requestContext.http.method === 'OPTIONS') {
         console.log("CORS preflight request success");
         return {
             statusCode: 200,
@@ -202,7 +203,7 @@ export const put_message_handler = async (event) => {
               console.log("AI response:", answer);
               // Save the AI response as a new message
               const aiMessage = new Message({
-                conversation_id: conversationId,
+                conversationId: conversationId,
                 text: answer,
                 author: 'ai',
               });
