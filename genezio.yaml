@@ -25,3 +25,16 @@ services:
    - name: chat-app
      type: mongo-atlas
      region: us-east-1
+frontend:
+  path: client
+  sdk:
+    language: ts
+  publish: dist
+  scripts:
+    deploy:
+      - npm install
+    build: npm run build
+    start:
+      - npm install
+      - npm run dev
+  subdomain: chat-app-workshop
