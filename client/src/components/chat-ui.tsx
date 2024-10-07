@@ -1,6 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client"
+
 import { useState, useEffect } from "react"
 import { Menu } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -17,34 +20,109 @@ interface Message {
 
 interface Conversation {
   id: string
+  conversationId: string
+  name: string
   messages: Message[]
 }
 
+const API_URL_GET_ALL_CONVERSATIONS = import.meta.env.VITE_API_URL_GET_ALL_CONVERSATIONS
+const API_URL_GET_CONVERSATION = import.meta.env.VITE_API_URL_GET_CONVERSATION
+const API_URL_PUT_MESSAGE = import.meta.env.VITE_API_URL_PUT_MESSAGE
+
 // Mock API call - replace this with your actual API call
 const fetchConversations = async (): Promise<Conversation[]> => {
-  // Simulating API delay
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  
-  return [
-    {
-      id: "a1b2c3",
-      messages: [
-        { id: "1", author: "system", content: "Hello! How can I assist you today?", timestamp: "2023-05-01T10:00:00Z" },
-        { id: "2", author: "user", content: "I have a question about my account.", timestamp: "2023-05-01T10:01:00Z" },
-        { id: "3", author: "system", content: "What would you like to know about your account?", timestamp: "2023-05-01T10:02:00Z" },
-      ]
-    },
-    {
-      id: "d4e5f6",
-      messages: [
-        { id: "1", author: "system", content: "Welcome back! How may I help you today?", timestamp: "2023-05-02T09:00:00Z" },
-        { id: "2", author: "user", content: "I need help with a recent order.", timestamp: "2023-05-02T09:05:00Z" },
-      ]
-    },
-  ]
-}
+  // Simulating API delay (you can remove this if you want to directly fetch)
+  await new Promise(resolve => setTimeout(resolve, 1000));
 
-export function ChatUi() {
+  try {
+    const response = await fetch(`${API_URL_GET_ALL_CONVERSATIONS}/conversations`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const conversations = await data.conversations.map((conv: any) => ({
+      id: conv.conversationId,
+      messages: conv.messages.map((msg: any) => ({
+        id: msg.id,
+        author: msg.author === "human" ? "user" : "system", // Map agent to author
+        content: msg.text,
+        timestamp: new Date().toISOString(), // Replace with actual timestamp if available
+      })),
+    })) as Conversation[]
+
+    return conversations;
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+    return []; // Return an empty array in case of an error
+  }
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const fetchConversation = async (conversationId: string): Promise<Conversation[]> => {
+  // Simulating API delay (you can remove this if you want to directly fetch)
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  try {
+    const response = await fetch(`${API_URL_GET_CONVERSATION}/conversations/${conversationId}/messages`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return await data.conversations.map((conv: any) => ({
+      id: conv.id,
+      messages: conv.messages.map((msg: any) => ({
+        id: msg.id,
+        author: msg.agent === "human" ? "user" : "system", // Map agent to author
+        content: msg.text,
+        timestamp: new Date().toISOString(), // Replace with actual timestamp if available
+      })),
+    }));
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+    return []; // Return an empty array in case of an error
+  }
+};
+
+const addMessageToConversation = async (conversationId: string, message: string): Promise<void> => {
+  try {
+    const response = await fetch(`${API_URL_PUT_MESSAGE}/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        conversationId: conversationId, // Conversation ID
+        author: "human",
+        message: message, // Message content from the user
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Message added successfully:", data.message);
+  } catch (error) {
+    console.error("Error adding message:", error);
+  }
+};
+
+export default function ChatUI() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConversation, setActiveConversation] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
@@ -61,12 +139,12 @@ export function ChatUi() {
     loadConversations()
   }, [])
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (newMessage.trim() === "" || !activeConversation) return
 
     const updatedConversations = conversations.map(conv => {
-      if (conv.id === activeConversation) {
+      if (conv.conversationId === activeConversation) {
         return {
           ...conv,
           messages: [
@@ -76,14 +154,35 @@ export function ChatUi() {
               author: "user",
               content: newMessage,
               timestamp: new Date().toISOString()
-            }
+            },
           ]
         }
       }
       return conv
-    })
+    }) as Conversation[]
 
     setConversations(updatedConversations)
+
+    const aiResponse = await addMessageToConversation(activeConversation, newMessage)
+    const updatedAIConversations = conversations.map(conv => {
+      if (conv.conversationId === activeConversation) {
+        return {
+          ...conv,
+          messages: [
+            ...conv.messages,
+            {
+              id: Date.now().toString(),
+              author: "system",
+              content: aiResponse,
+              timestamp: new Date().toISOString()
+            },
+          ]
+        }
+      }
+      return conv
+    }) as Conversation[]
+
+    setConversations(updatedAIConversations)
     setNewMessage("")
   }
 
@@ -105,13 +204,13 @@ export function ChatUi() {
                 <Button
                   key={conv.id}
                   variant={conv.id === activeConversation ? "secondary" : "ghost"}
-                  className="w-full justify-start mb-2"
+                  className="w-full justify-start mb-2 text-primary"
                   onClick={() => {
-                    setActiveConversation(conv.id)
+                    setActiveConversation(conv.conversationId)
                     setIsMobileMenuOpen(false)
                   }}
                 >
-                  Conversation {conv.id}
+                  Conversation {conv.conversationId}
                 </Button>
               ))}
             </ScrollArea>
