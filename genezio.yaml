@@ -20,3 +20,8 @@ backend:
           path: .
           entry: backend.mjs
           handler: put_message_handler
+services:
+  databases:
+   - name: chat-app
+     type: mongo-atlas
+     region: us-east-1
