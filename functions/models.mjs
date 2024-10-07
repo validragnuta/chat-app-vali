@@ -2,13 +2,18 @@ import mongoose from 'mongoose';
 
 // Mongoose schemas
 const conversationSchema = new mongoose.Schema({
-    name: String,
+    conversationId: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    createdAt: { type: Date, default: Date.now },
 });
 
 const messageSchema = new mongoose.Schema({
     conversationId: String,
-    agent: String, // ai or human
     text: String,
+    author: String,
     createdAt: { type: Date, default: Date.now },
 });
 
@@ -18,9 +23,7 @@ const Message = mongoose.model('Message', messageSchema);
 
 // Connect to MongoDB
 export const connectToDatabase = async () => {
-    if (mongoose.connection.readyState === 0) {
-        await mongoose.connect(process.env.CHAT_APP_DATABASE_URL);
-    }
+    await mongoose.connect(process.env["CHAT_APP_DATABASE_URL"]);
 };
 
 // Export models

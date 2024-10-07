@@ -1,5 +1,3 @@
-// handlers.mjs
-
 import { connectToDatabase, Conversation, Message } from './models.mjs';
 
 // Mock data
@@ -21,7 +19,7 @@ export const get_all_conversations_handler = async (event) => {
     let conversations;
     try {
         // Check if the database URL is provided
-        if (process.env.CHAT_APP_DATABASE_URL) {
+        if (process.env["CHAT_APP_DATABASE_URL"]) {
             await connectToDatabase();
             conversations = await Conversation.find(); // Fetch all conversations
         } else {
@@ -60,11 +58,10 @@ export const get_conversation_handler = async (event) => {
     }
 
     let messages;
-
     try {
-        if(process.env.CHAT_APP_DATABASE_URL)   {
+        if(process.env["CHAT_APP_DATABASE_URL"])   {
             await connectToDatabase();
-            messages = await Message.find({ conversationId }); // Fetch messages for the conversation
+            messages = await Conversation.findOne({ conversationId }); // Fetch messages for the conversation
         } else {
             console.warn("Could not connect to the database, returning mock data.", error);
             // Use mock data if DB is unavailable
@@ -112,13 +109,26 @@ export const put_message_handler = async (event) => {
     const newMessageText = body.message;
 
     try {
-        if(process.env.CHAT_APP_DATABASE_URL)   {
+        if(process.env["CHAT_APP_DATABASE_URL"])   {
             await connectToDatabase();
+            const conversation = await Conversation.findOne({ conversationId });
+
+            if (!conversation) {
+                console.log("Creating new conversation");
+                const newConversation = new Conversation({
+                    conversationId: conversationId,
+                    name: `Conversation ${conversationId}`,
+                    messages: [],
+                });
+                await newConversation.save();
+            }
+
             const message = new Message({
                 conversationId,
                 text: newMessageText,
             });
             await message.save(); // Save the new message
+            console.log("Message added", newMessageText);
         } else {
             console.warn("Could not connect to the database, using mock data.", error);
             console.log("Mock: Message added", newMessageText); // Log mock message addition
