@@ -14,6 +14,19 @@ const mockMessages = [
 
 // GET /conversations
 export const get_all_conversations_handler = async (event) => {
+    if (event.httpMethod === 'OPTIONS') {
+        console.log("CORS preflight request success");
+        return {
+            statusCode: 200,
+            headers: {
+                "Access-Control-Allow-Origin": "*",  // Allow all origins
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",  // Allow methods
+                "Access-Control-Allow-Headers": "Content-Type",  // Allow headers
+            },
+            body: JSON.stringify({ message: "CORS preflight request success" }),
+        };
+    }
+
     console.log("Fetching all conversations");
 
     let conversations;
@@ -22,6 +35,18 @@ export const get_all_conversations_handler = async (event) => {
         if (process.env["CHAT_APP_DATABASE_URL"]) {
             await connectToDatabase();
             conversations = await Conversation.find(); // Fetch all conversations
+
+            const messages = await Message.find();
+
+            conversations = conversations.map((conversation) => {
+                const conversationMessages = messages.filter(
+                    (message) => message.conversationId === conversation.conversationId
+                );
+                return {
+                    ...conversation.toObject(),
+                    messages: conversationMessages,
+                };
+            });
         } else {
             console.warn("No database URL provided, returning mock data.");
             conversations = mockConversations; // Use mock data if no DB URL is present
@@ -39,6 +64,18 @@ export const get_all_conversations_handler = async (event) => {
 
 // GET /conversations/{conversationId}
 export const get_conversation_handler = async (event) => {
+    if (event.httpMethod === 'OPTIONS') {
+        console.log("CORS preflight request success");
+        return {
+            statusCode: 200,
+            headers: {
+                "Access-Control-Allow-Origin": "*",  // Allow all origins
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",  // Allow methods
+                "Access-Control-Allow-Headers": "Content-Type",  // Allow headers
+            },
+            body: JSON.stringify({ message: "CORS preflight request success" }),
+        };
+    }
     console.log("Fetching messages from conversation");
 
     if (!event.rawPath) {
@@ -81,6 +118,18 @@ export const get_conversation_handler = async (event) => {
 
 // PUT /conversations/{conversationId}/messages
 export const put_message_handler = async (event) => {
+    if (event.httpMethod === 'OPTIONS') {
+        console.log("CORS preflight request success");
+        return {
+            statusCode: 200,
+            headers: {
+                "Access-Control-Allow-Origin": "*",  // Allow all origins
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",  // Allow methods
+                "Access-Control-Allow-Headers": "Content-Type",  // Allow headers
+            },
+            body: JSON.stringify({ message: "CORS preflight request success" }),
+        };
+    }
     console.log("Adding message to conversation");
 
     if (!event.rawPath) {
@@ -124,7 +173,7 @@ export const put_message_handler = async (event) => {
             }
 
             const message = new Message({
-                conversationId,
+                conversationId: conversationId,
                 text: newMessageText,
             });
             await message.save(); // Save the new message
