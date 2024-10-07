@@ -26,7 +26,7 @@ interface Conversation {
 }
 
 const API_URL_GET_ALL_CONVERSATIONS = import.meta.env.VITE_API_URL_GET_ALL_CONVERSATIONS
-const API_URL_GET_CONVERSATION = import.meta.env.VITE_API_URL_GET_CONVERSATION
+// const API_URL_GET_CONVERSATION = import.meta.env.VITE_API_URL_GET_CONVERSATION
 const API_URL_PUT_MESSAGE = import.meta.env.VITE_API_URL_PUT_MESSAGE
 
 // Mock API call - replace this with your actual API call
@@ -58,39 +58,6 @@ const fetchConversations = async (): Promise<Conversation[]> => {
     })) as Conversation[]
 
     return conversations;
-  } catch (error) {
-    console.error("Error fetching conversations:", error);
-    return []; // Return an empty array in case of an error
-  }
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const fetchConversation = async (conversationId: string): Promise<Conversation[]> => {
-  // Simulating API delay (you can remove this if you want to directly fetch)
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  try {
-    const response = await fetch(`${API_URL_GET_CONVERSATION}/conversations/${conversationId}/messages`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return await data.conversations.map((conv: any) => ({
-      id: conv.id,
-      messages: conv.messages.map((msg: any) => ({
-        id: msg.id,
-        author: msg.agent === "human" ? "user" : "system", // Map agent to author
-        content: msg.text,
-        timestamp: new Date().toISOString(), // Replace with actual timestamp if available
-      })),
-    }));
   } catch (error) {
     console.error("Error fetching conversations:", error);
     return []; // Return an empty array in case of an error
