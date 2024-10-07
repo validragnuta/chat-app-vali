@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useState, useEffect } from "react"
@@ -22,29 +23,64 @@ interface Conversation {
   messages: Message[]
 }
 
+const API_ENDPOINT = "http://localhost:8083/.functions/"
+
 // Mock API call - replace this with your actual API call
 const fetchConversations = async (): Promise<Conversation[]> => {
-  // Simulating API delay
-  await new Promise(resolve => setTimeout(resolve, 1000))
+  // Simulating API delay (you can remove this if you want to directly fetch)
+  await new Promise(resolve => setTimeout(resolve, 1000));
 
-  return [
-    {
-      id: "a1b2c3",
-      messages: [
-        { id: "1", author: "system", content: "Hello! How can I assist you today?", timestamp: "2023-05-01T10:00:00Z" },
-        { id: "2", author: "user", content: "I have a question about my account.", timestamp: "2023-05-01T10:01:00Z" },
-        { id: "3", author: "system", content: "What would you like to know about your account?", timestamp: "2023-05-01T10:02:00Z" },
-      ]
-    },
-    {
-      id: "d4e5f6",
-      messages: [
-        { id: "1", author: "system", content: "Welcome back! How may I help you today?", timestamp: "2023-05-02T09:00:00Z" },
-        { id: "2", author: "user", content: "I need help with a recent order.", timestamp: "2023-05-02T09:05:00Z" },
-      ]
-    },
-  ]
-}
+  try {
+    const response = await fetch(`${API_ENDPOINT}/conversations`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.conversations.map((conv: any) => ({
+      id: conv.id,
+      messages: conv.messages.map((msg: any) => ({
+        id: msg.id,
+        author: msg.agent === "human" ? "user" : "system", // Map agent to author
+        content: msg.text,
+        timestamp: new Date().toISOString(), // Replace with actual timestamp if available
+      })),
+    }));
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+    return []; // Return an empty array in case of an error
+  }
+};
+
+const addMessageToConversation = async (conversationId: string, message: string): Promise<void> => {
+  try {
+    const response = await fetch(`${API_ENDPOINT}/${conversationId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: message, // Message content from the user
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Message added successfully:", data.message); // Handle the success response (e.g., refresh messages)
+  } catch (error) {
+    console.error("Error adding message:", error);
+    // Optionally, handle error (e.g., show notification or retry logic)
+  }
+};
 
 export default function ChatUI() {
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -63,9 +99,11 @@ export default function ChatUI() {
     loadConversations()
   }, [])
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (newMessage.trim() === "" || !activeConversation) return
+
+    const aiResponse = await addMessageToConversation(activeConversation, newMessage)
 
     const updatedConversations = conversations.map(conv => {
       if (conv.id === activeConversation) {
@@ -77,6 +115,12 @@ export default function ChatUI() {
               id: Date.now().toString(),
               author: "user",
               content: newMessage,
+              timestamp: new Date().toISOString()
+            },
+            {
+              id: Date.now().toString(),
+              author: "system",
+              content: aiResponse,
               timestamp: new Date().toISOString()
             }
           ]
