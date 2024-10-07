@@ -1,3 +1,4 @@
+import OpenAI from "openai";
 import { connectToDatabase, Conversation, Message } from './models.mjs';
 
 // Mock data
@@ -157,6 +158,7 @@ export const put_message_handler = async (event) => {
     }
     const newMessageText = body.message;
 
+    let answer;
     try {
         if(process.env["CHAT_APP_DATABASE_URL"])   {
             await connectToDatabase();
@@ -175,13 +177,47 @@ export const put_message_handler = async (event) => {
             const message = new Message({
                 conversationId: conversationId,
                 text: newMessageText,
+                author: "human",
             });
             await message.save(); // Save the new message
             console.log("Message added", newMessageText);
+
+            // Initialize OpenAI API
+            const openai = new OpenAI({
+                apiKey: process.env.OPENAI_API_KEY,
+            });
+
+            // Send the message to OpenAI and wait for the response
+            if (openai) {
+              try {
+                const completion = await openai.chat.completions.create({
+                  model: 'gpt-4o',
+                  messages: [{ role: 'user', content: newMessageText}],
+                });
+                answer = completion.choices[0].message.content;
+              } catch (error) {
+                console.log(error);
+              }
+
+              console.log("AI response:", answer);
+              // Save the AI response as a new message
+              const aiMessage = new Message({
+                conversation_id: conversationId,
+                text: answer,
+                author: 'ai',
+              });
+              await aiMessage.save(); // Save the AI response
+            }
         } else {
-            console.warn("Could not connect to the database, using mock data.", error);
+            console.warn("No database URL provided, using mock data.");
             console.log("Mock: Message added", newMessageText); // Log mock message addition
+            answer = "This is a mock response"; // Mock response when DB not connected
         }
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ message: "Message added successfully", answer }),
+        };
     } catch (error) {
         console.warn("Could not connect to the database, using mock data.", error);
         console.log("Mock: Message added", newMessageText); // Log mock message addition
