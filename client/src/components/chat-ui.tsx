@@ -95,9 +95,8 @@ const addMessageToConversation = async (
 
 export default function ChatUI() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeConversation, setActiveConversation] = useState<Conversation | null>(
-    null,
-  );
+  const [activeConversation, setActiveConversation] =
+    useState<Conversation | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
@@ -112,29 +111,7 @@ export default function ChatUI() {
     loadConversations();
   }, []);
 
-  useEffect(() => {
-    if (!activeConversation && conversations.length > 0) {
-      setActiveConversation(conversations[0]);
-    }
-
-    if (conversations.length === 0) {
-      // If no conversations exist, create a new one
-      const newConversationId = `${generateRandomId()}`;
-      const newConversation = {
-        id: newConversationId,
-        conversationId: newConversationId,
-        name: `Conversation ${newConversationId}`,
-        messages: [],
-      };
-
-      // Update the conversation state and set it as active
-      setConversations((prevConversations) => [
-        ...prevConversations,
-        newConversation,
-      ]);
-      setActiveConversation(newConversation);
-    }
-  }, [conversations, activeConversation]);
+  useEffect(() => {}, [conversations, activeConversation]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,7 +121,10 @@ export default function ChatUI() {
 
     // Add the user's message to the conversation
     const updatedConversations = conversations.map((conv) => {
-      if (activeConversation && conv.conversationId === activeConversation.conversationId) {
+      if (
+        activeConversation &&
+        conv.conversationId === activeConversation.conversationId
+      ) {
         const updatedConv = {
           ...conv,
           messages: [
@@ -174,7 +154,10 @@ export default function ChatUI() {
 
     // After receiving the system response, remove the "typing..." message and add the system's response
     const updatedAIConversations = updatedConversations.map((conv) => {
-      if (activeConversation && conv.conversationId === activeConversation.conversationId) {
+      if (
+        activeConversation &&
+        conv.conversationId === activeConversation.conversationId
+      ) {
         const updatedConv = {
           ...conv,
           messages: [
@@ -258,6 +241,7 @@ export default function ChatUI() {
         </ScrollArea>
       </nav>
 
+      {activeConversation && (
       <main className="flex-1 flex flex-col w-full">
         <Card className="flex-1 flex flex-col w-full max-h-[calc(100vh-8rem)]">
           <CardHeader>
@@ -322,7 +306,6 @@ export default function ChatUI() {
             </form>
           </CardContent>
         </Card>
-        {/* Add a footer Made with love wit Genezio */}
         <footer className="p-4 text-center text-sm text-gray-600 rounded-b-lg">
           Made with ❤️ with{' '}
           <a
@@ -335,6 +318,7 @@ export default function ChatUI() {
           </a>
         </footer>
       </main>
+      )}
     </div>
   );
 }
