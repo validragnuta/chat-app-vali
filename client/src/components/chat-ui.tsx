@@ -2,13 +2,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Menu } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { FaGithub } from "react-icons/fa"
 
 // Types for our data structure
 interface Message {
@@ -25,9 +24,7 @@ interface Conversation {
   messages: Message[]
 }
 
-const API_URL_GET_ALL_CONVERSATIONS = import.meta.env.VITE_API_URL_GET_ALL_CONVERSATIONS
-// const API_URL_GET_CONVERSATION = import.meta.env.VITE_API_URL_GET_CONVERSATION
-const API_URL_PUT_MESSAGE = import.meta.env.VITE_API_URL_PUT_MESSAGE
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
 
 // Mock API call - replace this with your actual API call
 const fetchConversations = async (): Promise<Conversation[]> => {
@@ -35,7 +32,7 @@ const fetchConversations = async (): Promise<Conversation[]> => {
   await new Promise(resolve => setTimeout(resolve, 1000));
 
   try {
-    const response = await fetch(`${API_URL_GET_ALL_CONVERSATIONS}/conversations`, {
+    const response = await fetch(`${API_URL}/conversations`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -66,7 +63,7 @@ const fetchConversations = async (): Promise<Conversation[]> => {
 
 const addMessageToConversation = async (conversationId: string, message: string): Promise<void> => {
   try {
-    const response = await fetch(`${API_URL_PUT_MESSAGE}/conversations/${conversationId}/messages`, {
+    const response = await fetch(`${API_URL}/conversations/${conversationId}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -93,7 +90,6 @@ export default function ChatUI() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConversation, setActiveConversation] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     const loadConversations = async () => {
@@ -153,61 +149,66 @@ export default function ChatUI() {
     setNewMessage("")
   }
 
+  const generateRandomId = () => {
+    return Math.random().toString(36).substring(2, 6); // Generates a random 4-character string
+  };
+
   const currentConversation = conversations.find(conv => conv.id === activeConversation)
 
   return (
-    <div className="flex h-screen">
-      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" className="lg:hidden fixed left-4 top-4 z-10">
-            <Menu />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-          <nav className="flex flex-col h-full">
-            <h2 className="text-lg font-semibold mb-4">Conversations</h2>
-            <ScrollArea className="flex-grow">
-              {conversations.map((conv) => (
-                <Button
-                  key={conv.id}
-                  variant={conv.id === activeConversation ? "secondary" : "ghost"}
-                  className="w-full justify-start mb-2 text-primary"
-                  onClick={() => {
-                    setActiveConversation(conv.conversationId)
-                    setIsMobileMenuOpen(false)
-                  }}
-                >
-                  Conversation {conv.conversationId}
-                </Button>
-              ))}
-            </ScrollArea>
-          </nav>
-        </SheetContent>
-      </Sheet>
+    <div className="flex h-screen bg-white">
 
-      <nav className="hidden lg:block w-64 border-r p-4">
-        <h2 className="text-lg font-semibold mb-4">Conversations</h2>
+      <nav className="hidden lg:block w-64 p-4">
+        <Button
+            key={"repository-link"}
+            variant={"link"}
+            className="w-full mb-2"
+            onClick={() => window.open("https://github.com/andreia-oca/chat-app-demo", "_blank")}
+        >
+          <FaGithub className="mr-2" /> Check Source Code
+        </Button>
         <ScrollArea className="h-[calc(100vh-8rem)]">
           {conversations.map((conv) => (
             <Button
               key={conv.id}
-              variant={conv.id === activeConversation ? "secondary" : "ghost"}
-              className="w-full justify-start mb-2"
+              variant={conv.id === activeConversation ? "default" : "secondary"}
+              className="w-full mb-2"
               onClick={() => setActiveConversation(conv.id)}
             >
               Conversation {conv.id}
             </Button>
           ))}
+          {/* Add a new conversation button */}
+          <Button
+            variant="secondary"
+            className="w-full mb-2"
+            onClick={() => {
+              const newConversationId = `${generateRandomId()}`
+              setConversations([
+                ...conversations,
+                {
+                  id: newConversationId,
+                  conversationId: newConversationId,
+                  name: `Conversation ${newConversationId}`,
+                  messages: [],
+                },
+              ])
+              setActiveConversation(newConversationId)
+            }}
+          >
+            New Conversation
+          </Button>
+
         </ScrollArea>
       </nav>
 
-      <main className="flex-1 flex flex-col">
-        <Card className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col w-full">
+        <Card className="flex-1 flex flex-col w-full max-h-[calc(100vh-8rem)]">
           <CardHeader>
             <CardTitle>Chat {activeConversation ? `- ${activeConversation}` : ""}</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            <ScrollArea className="flex-1 pr-4">
+            <ScrollArea className="flex-1 pr-4 bg-white overflow-y-auto w-full w-full max-h-[calc(80vh-8rem)]">
               {currentConversation?.messages.map((message) => (
                 <div
                   key={message.id}
@@ -231,9 +232,6 @@ export default function ChatUI() {
                       }`}
                     >
                       <p>{message.content}</p>
-                      <span className="text-xs opacity-50">
-                        {new Date(message.timestamp).toLocaleTimeString()}
-                      </span>
                     </div>
                   </div>
                 </div>
