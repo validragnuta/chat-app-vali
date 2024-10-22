@@ -74,9 +74,8 @@ const addMessageToConversation = async (
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          conversationId: conversationId, // Conversation ID
           author: 'human',
-          message: message, // Message content from the user
+          message: message,
         }),
       },
     );
