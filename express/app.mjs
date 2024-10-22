@@ -112,6 +112,7 @@ app.get('/conversations/:conversationId', async (req, res) => {
 
 // POST /conversations/:conversationId/messages - Add a message to a conversation
 app.post('/conversations/:conversationId/messages', async (req, res) => {
+  // const message = req.body.message;
   const message = JSON.parse(req.body).message;
   const { conversationId } = req.params;
 

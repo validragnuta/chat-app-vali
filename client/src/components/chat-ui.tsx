@@ -112,15 +112,39 @@ export default function ChatUI() {
     loadConversations();
   }, []);
 
+  useEffect(() => {
+    if (!activeConversation && conversations.length > 0) {
+      setActiveConversation(conversations[0]);
+    }
+
+    if (conversations.length === 0) {
+      // If no conversations exist, create a new one
+      const newConversationId = `${generateRandomId()}`;
+      const newConversation = {
+        id: newConversationId,
+        conversationId: newConversationId,
+        name: `Conversation ${newConversationId}`,
+        messages: [],
+      };
+
+      // Update the conversation state and set it as active
+      setConversations((prevConversations) => [
+        ...prevConversations,
+        newConversation,
+      ]);
+      setActiveConversation(newConversation);
+    }
+  }, [conversations, activeConversation]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !activeConversation) return;
+    if (newMessage.trim() === '' && !activeConversation) return;
     const message = newMessage.trim();
     setNewMessage('');
 
     // Add the user's message to the conversation
     const updatedConversations = conversations.map((conv) => {
-      if (conv.conversationId === activeConversation.conversationId) {
+      if (activeConversation && conv.conversationId === activeConversation.conversationId) {
         const updatedConv = {
           ...conv,
           messages: [
@@ -144,13 +168,13 @@ export default function ChatUI() {
     setIsTyping(true);
 
     const aiResponse = await addMessageToConversation(
-      activeConversation.id,
+      activeConversation!.id,
       message,
     );
 
     // After receiving the system response, remove the "typing..." message and add the system's response
     const updatedAIConversations = updatedConversations.map((conv) => {
-      if (conv.conversationId === activeConversation.conversationId) {
+      if (activeConversation && conv.conversationId === activeConversation.conversationId) {
         const updatedConv = {
           ...conv,
           messages: [
@@ -197,7 +221,9 @@ export default function ChatUI() {
           {conversations.map((conv) => (
             <Button
               key={conv.id}
-              variant={conv.id === activeConversation?.id ? 'default' : 'secondary'}
+              variant={
+                conv.id === activeConversation?.id ? 'default' : 'secondary'
+              }
               className="w-full mb-2"
               onClick={() => setActiveConversation(conv)}
             >
@@ -296,6 +322,18 @@ export default function ChatUI() {
             </form>
           </CardContent>
         </Card>
+        {/* Add a footer Made with love wit Genezio */}
+        <footer className="p-4 text-center text-sm text-gray-600 rounded-b-lg">
+          Made with ❤️ with{' '}
+          <a
+            href="https://genezio.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            Genezio
+          </a>
+        </footer>
       </main>
     </div>
   );
