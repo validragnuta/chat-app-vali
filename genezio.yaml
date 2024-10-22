@@ -1,17 +1,6 @@
 name: chat-app
 region: us-east-1
 yamlVersion: 2
-backend:
-    path: express
-    language:
-        name: js
-    scripts:
-      deploy: npm install
-    functions:
-        - name: express-server
-          path: .
-          entry: app.js
-          type: httpServer
 
 services:
   databases:
@@ -19,20 +8,31 @@ services:
      type: mongo-atlas
      region: us-east-1
 
-# frontend:
-#   path: client
-#   sdk:
-#     language: ts
-#   publish: dist
-#   environment:
-#     VITE_API_URL_GET_ALL_CONVERSATIONS: ${{ backend.functions.get-all-conversations.url }}
-#     VITE_API_URL_GET_CONVERSATION: ${{ backend.functions.get-conversation.url }}
-#     VITE_API_URL_PUT_MESSAGE: ${{ backend.functions.put-message.url }}
-#   scripts:
-#     deploy:
-#       - npm install
-#     build: npm run build
-#     start:
-#       - npm install
-#       - npm run dev
-#   subdomain: chat-app-workshop
+backend:
+    path: express
+    language:
+        name: js
+    scripts:
+      deploy: npm install
+    functions:
+        - name: express
+          path: .
+          entry: app.mjs
+          type: httpServer
+
+frontend:
+  path: client
+  sdk:
+    language: ts
+  publish: dist
+  environment:
+    VITE_API_URL: ${{ backend.functions.express.url }}
+  scripts:
+    deploy:
+      - npm install
+    build:
+      - npm run build
+    start:
+      - npm install
+      - npm run dev
+  subdomain: chat-app-workshop
