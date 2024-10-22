@@ -2,43 +2,37 @@ name: chat-app
 region: us-east-1
 yamlVersion: 2
 backend:
-    path: functions
+    path: express
     language:
         name: js
     scripts:
       deploy: npm install
     functions:
-        - name: get-all-conversations
+        - name: express-server
           path: .
-          entry: backend.mjs
-          handler: get_all_conversations_handler
-        - name: get-conversation
-          path: .
-          entry: backend.mjs
-          handler: get_conversation_handler
-        - name: put-message
-          path: .
-          entry: backend.mjs
-          handler: put_message_handler
+          entry: app.js
+          type: httpServer
+
 services:
   databases:
    - name: chat-app
      type: mongo-atlas
      region: us-east-1
-frontend:
-  path: client
-  sdk:
-    language: ts
-  publish: dist
-  environment:
-    VITE_API_URL_GET_ALL_CONVERSATIONS: ${{ backend.functions.get-all-conversations.url }}
-    VITE_API_URL_GET_CONVERSATION: ${{ backend.functions.get-conversation.url }}
-    VITE_API_URL_PUT_MESSAGE: ${{ backend.functions.put-message.url }}
-  scripts:
-    deploy:
-      - npm install
-    build: npm run build
-    start:
-      - npm install
-      - npm run dev
-  subdomain: chat-app-workshop
+
+# frontend:
+#   path: client
+#   sdk:
+#     language: ts
+#   publish: dist
+#   environment:
+#     VITE_API_URL_GET_ALL_CONVERSATIONS: ${{ backend.functions.get-all-conversations.url }}
+#     VITE_API_URL_GET_CONVERSATION: ${{ backend.functions.get-conversation.url }}
+#     VITE_API_URL_PUT_MESSAGE: ${{ backend.functions.put-message.url }}
+#   scripts:
+#     deploy:
+#       - npm install
+#     build: npm run build
+#     start:
+#       - npm install
+#       - npm run dev
+#   subdomain: chat-app-workshop
