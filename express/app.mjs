@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from 'dotenv';
 import cors from 'cors';
+import { OpenAI } from 'openai';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -51,10 +52,7 @@ app.get("/", (_req, res) => {
 
 // Function to connect to the MongoDB database
 const connectToDatabase = async () => {
-  await mongoose.connect(process.env["CHAT_APP_DATABASE_URL"], {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
+  await mongoose.connect(process.env["CHAT_APP_DATABASE_URL"]);
 };
 
 // GET /conversations - Fetch all conversations
@@ -74,7 +72,6 @@ app.get('/conversations', async (req, res) => {
         return { ...conversation.toObject(), messages: conversationMessages };
       });
       console.log("Connected to the database and fetched conversations.");
-      console.log(conversations)
     } else {
       console.warn("No database URL provided, returning mock data.");
       conversations = mockConversations;
