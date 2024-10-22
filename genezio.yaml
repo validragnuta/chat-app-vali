@@ -35,4 +35,3 @@ frontend:
     start:
       - npm install
       - npm run dev
-  subdomain: chat-app-workshop
