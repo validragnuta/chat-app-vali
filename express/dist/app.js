@@ -130,6 +130,12 @@ app.post('/conversations/:conversationId/messages', (req, res) => __awaiter(void
         res.json({ message: "Message added successfully" });
     }
 }));
+// DELETE /conversations/:conversationId - Delete a conversation and its messages
+// TODO Implement the logic for this endpoint
+// DELETE /conversations/:conversationId - Delete a conversation and its messages
+app.delete('/conversations/:conversationId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.json({ message: "not implemented" });
+}));
 // Start the Express server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
