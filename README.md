@@ -19,6 +19,7 @@ Your `TODO` is to implement the DELETE endpoint for deleting a conversation and 
 // TODO Implement the logic for this endpoint
 app.delete('/conversations/:conversationId', async (req: Request, res:Response) => {
   res.json({ message: "Not implemented yet" });
+  return;
 });
 ```
 
@@ -61,4 +62,5 @@ If you encounter any issues, please leave a [GitHub issue] and I'll try to help 
 
 ## Resources
 
+- https://genezio.com/
 - https://genezio.com/docs/

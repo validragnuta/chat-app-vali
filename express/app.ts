@@ -48,6 +48,7 @@ app.get('/conversations', async (req, res) => {
   }
 
   res.json({ conversations });
+  return;
 });
 
 // GET /conversations/:conversationId - Fetch messages from a specific conversation
@@ -74,6 +75,7 @@ app.get('/conversations/:conversationId', async (req: Request, res:Response) => 
   }
 
   res.json({ messages });
+  return;
 });
 
 
@@ -151,26 +153,21 @@ app.post('/conversations/:conversationId/messages', async (req: Request, res:Res
     console.error("Error saving AI message", error);
   }
   res.json({ message: "Message added successfully", answer});
+  return;
 });
 
 // DELETE /conversations/:conversationId - Delete a conversation and its messages
 // TODO Implement the logic for this endpoint
 app.delete('/conversations/:conversationId', async (req: Request, res:Response) => {
   res.json({ message: "not implemented" });
+  return;
 });
-
-// Start the Express server
-// const PORT = process.env.PORT || 3000;
-
-// app.listen(PORT, () => {
-//   console.log(`Server is running on port ${PORT}`);
-// });
 
 // You don't need to listen to the port when using serverless functions in production
 if (process.env.NODE_ENV === "dev") {
   app.listen(3000, () => {
     console.log(
-      "Server is running on port 3000. Check the app on http://localhost:8080"
+      "Server is running on port 3000. Check the app on http://localhost:3000"
     );
   });
 }
