@@ -83,53 +83,69 @@ app.post('/conversations/:conversationId/messages', (req, res) => __awaiter(void
     const message = req.body.message;
     const { conversationId } = req.params;
     if (!conversationId || !message) {
-        res.json({ message: "Missing conversationId or message" });
+        console.error("Missing conversationId or message");
+        res.json({ message: "Missing conversationId or message", answer: "Internal Server Error" });
+        return;
+    }
+    if (!process.env["CHAT_APP_DATABASE_URL"]) {
+        console.error("Missing process.env.CHAT_APP_DATABASE_URL:");
+        res.json({ message: "Message dropped", answer: "Database not defined" });
+        return;
     }
     let answer;
     try {
-        if (process.env["CHAT_APP_DATABASE_URL"]) {
-            yield (0, models_1.connectToDatabase)();
-            let conversation = yield models_1.Conversation.findOne({ conversationId });
-            if (!conversation) {
-                conversation = new models_1.Conversation({
-                    conversationId: conversationId,
-                    name: `Conversation ${conversationId}`,
-                });
-                yield conversation.save();
-            }
-            const newMessage = new models_1.Message({
+        yield (0, models_1.connectToDatabase)();
+        let conversation = yield models_1.Conversation.findOne({ conversationId });
+        if (!conversation) {
+            conversation = new models_1.Conversation({
                 conversationId: conversationId,
-                text: message,
-                author: "human",
+                name: `Conversation ${conversationId}`,
             });
-            yield newMessage.save();
+            yield conversation.save();
+        }
+        const newMessage = new models_1.Message({
+            conversationId: conversationId,
+            text: message,
+            author: "human",
+        });
+        yield newMessage.save();
+    }
+    catch (error) {
+        console.error("Error saving message", error);
+        res.json({ message: "Message dropped", answer: "Internal Server Error" });
+        return;
+    }
+    if (process.env.OPENAI_API_KEY) {
+        try {
             // Initialize OpenAI API
             const openai = new openai_1.OpenAI({
                 apiKey: process.env.OPENAI_API_KEY,
             });
-            if (openai) {
-                const completion = yield openai.chat.completions.create({
-                    model: 'gpt-4',
-                    messages: [{ role: 'user', content: message }],
-                });
-                answer = completion.choices[0].message.content;
-                const aiMessage = new models_1.Message({
-                    conversationId: conversationId,
-                    text: answer,
-                    author: "ai",
-                });
-                yield aiMessage.save();
-            }
+            const completion = yield openai.chat.completions.create({
+                model: 'gpt-4',
+                messages: [{ role: 'user', content: message }],
+            });
+            res.json({ message: "Message added successfully", answer: completion.choices[0].message.content });
         }
-        else {
-            console.warn("No database URL, nor openai api key provided, using mock data.");
-            answer = "This is a mock response"; // Mock AI response
+        catch (error) {
+            console.error("Error calling the AI", error);
+            res.json({ message: "Message added successfully", answer: "Failed to communicate with the AI" });
         }
-        res.json({ message: "Message added successfully", answer });
+        try {
+            const aiMessage = new models_1.Message({
+                conversationId: conversationId,
+                text: answer,
+                author: "ai",
+            });
+            yield aiMessage.save();
+        }
+        catch (error) {
+            console.error("Error saving AI message", error);
+        }
     }
-    catch (error) {
-        console.warn("Could not connect to the database, using mock data.", error);
-        res.json({ message: "Message added successfully" });
+    else {
+        console.warn("No process.env.OPENAI_API_KEY provided, using mock data.");
+        res.json({ message: "Message added successfully", answer: "This is a mock response" });
     }
 }));
 // DELETE /conversations/:conversationId - Delete a conversation and its messages

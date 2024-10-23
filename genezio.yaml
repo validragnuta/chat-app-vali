@@ -9,6 +9,9 @@ backend:
         name: js
     path: express
     scripts:
+        local:
+            - npm install
+            - npm run build
         deploy:
             - npm install
             - npm run build
@@ -27,7 +30,6 @@ frontend:
             - npm run dev
     sdk:
         language: ts
-    subdomain: chat-app
 name: chat-app
 region: us-east-1
 services:
