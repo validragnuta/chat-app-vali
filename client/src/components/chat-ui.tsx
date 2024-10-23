@@ -96,15 +96,12 @@ const addMessageToConversation = async (
 
 const deleteConversation = async (conversationId: string) => {
   try {
-    const response = await fetch(
-      `${API_URL}/conversations/${conversationId}`,
-      {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+    const response = await fetch(`${API_URL}/conversations/${conversationId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    );
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -114,7 +111,7 @@ const deleteConversation = async (conversationId: string) => {
     console.error('Error deleting conversation:', error);
   }
   return undefined;
-}
+};
 
 export default function ChatUI() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -122,19 +119,30 @@ export default function ChatUI() {
     useState<Conversation | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const loadConversations = async () => {
-      const data = await fetchConversations();
-      setConversations(data);
-      if (data.length > 0) {
-        setActiveConversation(data[0]);
+      setIsLoading(true); // Start loading
+
+      try {
+        const data = await fetchConversations();
+        setConversations(data);
+        if (data.length > 0) {
+          setActiveConversation(data[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+        // Optionally handle errors here (e.g., set error state)
+      } finally {
+        setIsLoading(false); // Stop loading after conversations are fetched or an error occurs
       }
     };
+
     loadConversations();
   }, []);
 
-  useEffect(() => {}, [conversations, activeConversation]);
+  // useEffect(() => {}, [conversations, activeConversation]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,7 +196,7 @@ export default function ChatUI() {
             {
               id: Date.now().toString(),
               author: 'system',
-              content: aiResponse || 'Sorry, I did not understand that.',
+              content: aiResponse,
               timestamp: new Date().toISOString(),
             },
           ],
@@ -222,6 +230,10 @@ export default function ChatUI() {
     return Math.random().toString(36).substring(2, 6); // Generates a random 4-character string
   };
 
+  const Spinner = () => (
+    <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-300 border-t-transparent"></div>
+  );
+
   return (
     <div className="flex h-screen bg-white">
       <nav className="hidden lg:block w-64 p-4">
@@ -230,34 +242,37 @@ export default function ChatUI() {
           variant={'link'}
           className="w-full mb-2"
           onClick={() =>
-            window.open(
-              'https://github.com/Genez-io/chat-app',
-              '_blank',
-            )
+            window.open('https://github.com/Genez-io/chat-app', '_blank')
           }
         >
           <FaGithub className="mr-2" /> Check Source Code
         </Button>
         <ScrollArea className="h-[calc(100vh-8rem)]">
-          {conversations.map((conv) => (
-            <div key={conv.id} className="flex items-center mb-2">
-            <Button
-              variant={
-                conv.id === activeConversation?.id ? 'default' : 'secondary'
-              }
-              className="w-full flex-1"
-              onClick={() => setActiveConversation(conv)}
-            >
-              Conversation {conv.id}
-            </Button>
-            <button
-              className="ml-2 p-2 bg-gray-200 text-red-500 hover:text-red-700" // Style the delete button
-              onClick={() => handleDeletedConversation(conv.id)} // Call the delete function
-            >
-              <FaTrash />
-            </button>
-          </div>
-          ))}
+          {isLoading ? ( // Show spinner if loading
+            <div className="flex justify-center items-center h-full">
+              <Spinner />
+            </div>
+          ) : (
+            conversations.map((conv) => (
+              <div key={conv.id} className="flex items-center mb-2">
+                <Button
+                  variant={
+                    conv.id === activeConversation?.id ? 'default' : 'secondary'
+                  }
+                  className="w-full flex-1"
+                  onClick={() => setActiveConversation(conv)}
+                >
+                  Conversation {conv.id}
+                </Button>
+                <button
+                  className="ml-2 p-2 bg-gray-200 text-red-500 hover:text-red-700" // Style the delete button
+                  onClick={() => handleDeletedConversation(conv.id)} // Call the delete function
+                >
+                  <FaTrash />
+                </button>
+              </div>
+            ))
+          )}
           {/* Add a new conversation button */}
           <Button
             variant="secondary"
@@ -287,82 +302,87 @@ export default function ChatUI() {
       </nav>
 
       {activeConversation && (
-      <main className="flex-1 flex flex-col w-full">
-        <Card className="flex-1 flex flex-col w-full max-h-[calc(100vh-8rem)]">
-          <CardHeader>
-            <CardTitle>
-              Chat {activeConversation ? `- ${activeConversation.id}` : ''}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col">
-            <ScrollArea className="flex-1 pr-4 bg-white overflow-y-auto max-h-[calc(80vh-8rem)]" style={{ width: '90vh' }} >
-              {activeConversation?.messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex mb-4 ${
-                    message.author === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
-                >
+        <main className="flex-1 flex flex-col w-full">
+          <Card className="flex-1 flex flex-col w-full max-h-[calc(100vh-8rem)]">
+            <CardHeader>
+              <CardTitle>
+                Chat {activeConversation ? `- ${activeConversation.id}` : ''}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col">
+              <ScrollArea
+                className="flex-1 pr-4 bg-white overflow-y-auto max-h-[calc(80vh-8rem)]"
+                style={{ width: '90vh' }}
+              >
+                {activeConversation?.messages.map((message) => (
                   <div
-                    className={`flex items-start ${
+                    key={message.id}
+                    className={`flex mb-4 ${
                       message.author === 'user'
-                        ? 'flex-row-reverse'
-                        : 'flex-row'
+                        ? 'justify-end'
+                        : 'justify-start'
                     }`}
                   >
-                    <Avatar className="w-8 h-8">
-                      <AvatarFallback>
-                        {message.author === 'user' ? 'U' : 'S'}
-                      </AvatarFallback>
-                    </Avatar>
                     <div
-                      className={`mx-2 px-4 py-2 rounded-lg ${
+                      className={`flex items-start ${
                         message.author === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                          ? 'flex-row-reverse'
+                          : 'flex-row'
                       }`}
                     >
-                      <p>{message.content}</p>
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback>
+                          {message.author === 'user' ? 'U' : 'S'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div
+                        className={`mx-2 px-4 py-2 rounded-lg ${
+                          message.author === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        <p>{message.content}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-              {/* Show typing indicator */}
-              {isTyping && (
-                <div className="flex mb-4 justify-start">
-                  <div className="flex items-start">
-                    <Avatar className="w-8 h-8">
-                      <AvatarFallback>S</AvatarFallback>
-                    </Avatar>
-                    <div className="mx-2 px-4 py-2 rounded-lg bg-muted">
-                      <p>...</p>
+                ))}
+                {/* Show typing indicator */}
+                {isTyping && (
+                  <div className="flex mb-4 justify-start">
+                    <div className="flex items-start">
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback>S</AvatarFallback>
+                      </Avatar>
+                      <div className="mx-2 px-4 py-2 rounded-lg bg-muted">
+                        <p>...</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </ScrollArea>
-            <form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
-              <Input
-                placeholder="Type your message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-              />
-              <Button type="submit">Send</Button>
-            </form>
-          </CardContent>
-        </Card>
-        <footer className="p-4 text-center text-sm text-gray-600 rounded-b-lg">
-          Made with ❤️ with{' '}
-          <a
-            href="https://genezio.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            Genezio
-          </a>
-        </footer>
-      </main>
+                )}
+              </ScrollArea>
+              <form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
+                <Input
+                  placeholder="Type your message..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                />
+                <Button type="submit">Send</Button>
+              </form>
+            </CardContent>
+          </Card>
+          <footer className="p-4 text-center text-sm text-gray-600 rounded-b-lg">
+            Made with ❤️ with{' '}
+            <a
+              href="https://genezio.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Genezio
+            </a>
+          </footer>
+        </main>
       )}
     </div>
   );
