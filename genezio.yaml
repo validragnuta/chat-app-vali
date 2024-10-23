@@ -1,40 +1,40 @@
+backend:
+    functions:
+        - entry: dist/app.js
+          handler: handler
+          name: express
+          path: .
+          type: aws
+    language:
+        name: js
+    path: express
+    scripts:
+        local:
+            - npm install
+            - npm run build
+        deploy:
+            - npm install
+            - npm run build
+frontend:
+    environment:
+        VITE_API_URL: ${{ backend.functions.express.url }}
+    path: client
+    publish: dist
+    scripts:
+        build:
+            - npm run build
+        deploy:
+            - npm install
+        start:
+            - npm install
+            - npm run dev
+    sdk:
+        language: ts
 name: chat-app
 region: us-east-1
-yamlVersion: 2
-
 services:
-  databases:
-    - name: chat-app
-      type: mongo-atlas
-      region: us-east-1
-
-backend:
-  path: express
-  language:
-    name: js
-  scripts:
-    deploy:
-      - npm install
-      - npm run build
-  functions:
-    - name: express
-      path: .
-      entry: dist/app.js
-      handler: handler
-      type: aws
-
-frontend:
-  path: client
-  sdk:
-    language: ts
-  publish: dist
-  environment:
-    VITE_API_URL: ${{ backend.functions.express.url }}
-  scripts:
-    deploy:
-      - npm install
-    build:
-      - npm run build
-    start:
-      - npm install
-      - npm run dev
+    databases:
+        - name: chat-app
+          region: us-east-1
+          type: mongo-atlas
+yamlVersion: 2
