@@ -26,9 +26,11 @@ app.delete('/conversations/:conversationId', async (req: Request, res:Response) 
     }
 
     res.json({ message: "Conversation deleted successfully" });
+    return;
   } catch (error) {
     console.warn("Could not connect to the database, using mock data.", error);
-    res.json({ message: "Conversation deleted successfully" });
+    res.json({ message: "Could not delete conversation" });
+    return;
   }
 });
 ```
