@@ -20,7 +20,8 @@ backend:
     - name: express
       path: .
       entry: dist/app.js
-      type: httpServer
+      handler: handler
+      type: aws
 
 frontend:
   path: client
