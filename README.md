@@ -6,6 +6,11 @@ To seamlessly deploy it on your Genezio account click the following button:
 
 [![Genezio Deploy](https://raw.githubusercontent.com/Genez-io/graphics/main/svg/deploy-button.svg)](https://app.genez.io/start/deploy?repository=https://github.com/genez-io/chat-app)
 
+## Open AI API key
+
+During this workshop you are going to be provided with an Open AI API key.
+[Check out this shared spreadsheet to get it](https://docs.google.com/spreadsheets/d/1WxpT6o6912OT7nReseJvbTU9AKXrvwMnJ8QMVyK-35A/edit?usp=sharing).
+
 ## Challenge
 
 This repository contains a small challenge for you to interact on your own with the Genezio platform.
