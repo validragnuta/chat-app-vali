@@ -56,6 +56,7 @@ app.get('/conversations/:conversationId', async (req: Request, res:Response) => 
 
   if (!conversationId) {
     res.json({ message: "Missing conversationId" });
+    return;
   }
 
   let messages;
@@ -93,7 +94,6 @@ app.post('/conversations/:conversationId/messages', async (req: Request, res:Res
     return;
   }
 
-  let answer;
   try {
     await connectToDatabase();
     let conversation = await Conversation.findOne({ conversationId });
@@ -118,6 +118,7 @@ app.post('/conversations/:conversationId/messages', async (req: Request, res:Res
     return;
   }
 
+  let answer;
   if (process.env.OPENAI_API_KEY) {
     try {
       // Initialize OpenAI API
@@ -129,26 +130,27 @@ app.post('/conversations/:conversationId/messages', async (req: Request, res:Res
         model: 'gpt-4',
         messages: [{ role: 'user', content: message }],
       });
-      res.json({message: "Message added successfully", answer: completion.choices[0].message.content});
+      answer = completion.choices[0].message.content;
     } catch(error) {
       console.error("Error calling the AI", error);
-      res.json({ message: "Message added successfully", answer: "Failed to communicate with the AI" });
-    }
-
-    try {
-      const aiMessage = new Message({
-        conversationId: conversationId,
-        text: answer,
-        author: "ai",
-      });
-      await aiMessage.save();
-    } catch(error) {
-      console.error("Error saving AI message", error);
+      answer = "Failed to communicate with the AI";
     }
   } else {
     console.warn("No process.env.OPENAI_API_KEY provided, using mock data.");
-    res.json({message: "Message added successfully", answer: "This is a mock response"});
+    answer = "This is a mock response";
   }
+
+  try {
+    const aiMessage = new Message({
+      conversationId: conversationId,
+      text: answer,
+      author: "ai",
+    });
+    await aiMessage.save();
+  } catch(error) {
+    console.error("Error saving AI message", error);
+  }
+  res.json({ message: "Message added successfully", answer});
 });
 
 // DELETE /conversations/:conversationId - Delete a conversation and its messages
