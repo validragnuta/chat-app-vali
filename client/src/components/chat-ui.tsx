@@ -242,7 +242,7 @@ export default function ChatUI() {
           variant={'link'}
           className="w-full mb-2"
           onClick={() =>
-            window.open('https://github.com/Genez-io/chat-app', '_blank')
+            window.open('https://github.com/Genez-io/chat-app-vali2', '_blank')
           }
         >
           <FaGithub className="mr-2" /> Check Source Code
