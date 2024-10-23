@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FaGithub } from 'react-icons/fa';
+import { FaTrash } from 'react-icons/fa6';
 
 // Types for our data structure
 interface Message {
@@ -92,6 +93,28 @@ const addMessageToConversation = async (
 
   return undefined;
 };
+
+const deleteConversation = async (conversationId: string) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/conversations/${conversationId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error deleting conversation:', error);
+  }
+  return undefined;
+}
 
 export default function ChatUI() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -180,6 +203,21 @@ export default function ChatUI() {
     await setConversations(updatedAIConversations);
   };
 
+  const handleDeletedConversation = async (conversationId: string) => {
+    const response = await deleteConversation(conversationId);
+    if (!response.message.includes('not implemented')) {
+      setConversations(
+        conversations.filter((conv) => conv.id !== conversationId),
+      );
+
+      if (conversations.length > 0) {
+        setActiveConversation(conversations[0]);
+      } else {
+        setActiveConversation(null);
+      }
+    }
+  };
+
   const generateRandomId = () => {
     return Math.random().toString(36).substring(2, 6); // Generates a random 4-character string
   };
@@ -193,7 +231,7 @@ export default function ChatUI() {
           className="w-full mb-2"
           onClick={() =>
             window.open(
-              'https://github.com/andreia-oca/chat-app-demo',
+              'https://github.com/Genez-io/chat-app',
               '_blank',
             )
           }
@@ -202,16 +240,23 @@ export default function ChatUI() {
         </Button>
         <ScrollArea className="h-[calc(100vh-8rem)]">
           {conversations.map((conv) => (
+            <div key={conv.id} className="flex items-center mb-2">
             <Button
-              key={conv.id}
               variant={
                 conv.id === activeConversation?.id ? 'default' : 'secondary'
               }
-              className="w-full mb-2"
+              className="w-full flex-1"
               onClick={() => setActiveConversation(conv)}
             >
               Conversation {conv.id}
             </Button>
+            <button
+              className="ml-2 p-2 bg-gray-200 text-red-500 hover:text-red-700" // Style the delete button
+              onClick={() => handleDeletedConversation(conv.id)} // Call the delete function
+            >
+              <FaTrash />
+            </button>
+          </div>
           ))}
           {/* Add a new conversation button */}
           <Button
@@ -250,7 +295,7 @@ export default function ChatUI() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            <ScrollArea className="flex-1 pr-4 bg-white overflow-y-auto w-full w-full max-h-[calc(80vh-8rem)]">
+            <ScrollArea className="flex-1 pr-4 bg-white overflow-y-auto max-h-[calc(80vh-8rem)]" style={{ width: '90vh' }} >
               {activeConversation?.messages.map((message) => (
                 <div
                   key={message.id}
