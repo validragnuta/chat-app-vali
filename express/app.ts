@@ -1,4 +1,5 @@
 import express from "express";
+import Serverless from "serverless-http";
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { OpenAI } from 'openai';
@@ -125,7 +126,7 @@ app.post('/conversations/:conversationId/messages', async (req: Request, res:Res
         await aiMessage.save();
       }
     } else {
-      console.warn("No database URL provided, using mock data.");
+      console.warn("No database URL, nor openai api key provided, using mock data.");
       answer = "This is a mock response"; // Mock AI response
     }
 
@@ -143,9 +144,19 @@ app.delete('/conversations/:conversationId', async (req: Request, res:Response) 
 });
 
 // Start the Express server
-const PORT = process.env.PORT || 3000;
+// const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Server is running on port ${PORT}`);
+// });
 
+// You don't need to listen to the port when using serverless functions in production
+if (process.env.NODE_ENV === "dev") {
+  app.listen(3000, () => {
+    console.log(
+      "Server is running on port 3000. Check the app on http://localhost:8080"
+    );
+  });
+}
+
+export const handler = Serverless(app);
