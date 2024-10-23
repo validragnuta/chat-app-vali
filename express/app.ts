@@ -51,6 +51,14 @@ app.get('/conversations', async (req, res) => {
   return;
 });
 
+// DELETE /conversations/:conversationId - Delete a conversation and its messages
+// TODO Implement the logic for this endpoint
+app.delete('/conversations/:conversationId', async (req: Request, res:Response) => {
+  res.json({ message: "Not implemented yet" });
+  return;
+});
+
+
 // GET /conversations/:conversationId - Fetch messages from a specific conversation
 app.get('/conversations/:conversationId', async (req: Request, res:Response) => {
   const { conversationId } = req.params;
