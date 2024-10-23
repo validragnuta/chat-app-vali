@@ -4,21 +4,23 @@ yamlVersion: 2
 
 services:
   databases:
-   - name: chat-app
-     type: mongo-atlas
-     region: us-east-1
+    - name: chat-app
+      type: mongo-atlas
+      region: us-east-1
 
 backend:
-    path: express
-    language:
-        name: js
-    scripts:
-      deploy: npm install
-    functions:
-        - name: express
-          path: .
-          entry: app.mjs
-          type: httpServer
+  path: express
+  language:
+    name: js
+  scripts:
+    deploy:
+      - npm install
+      - npm run build
+  functions:
+    - name: express
+      path: .
+      entry: dist/app.js
+      type: httpServer
 
 frontend:
   path: client
