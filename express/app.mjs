@@ -43,19 +43,16 @@ const mockMessages = [
 // Express App Setup
 const app = express();
 
+// Middlewares for CORS and JSON parsing
 app.use(cors());
 app.use(express.json());
 
+// GET / - Hello world endpoint
 app.get("/", (_req, res) => {
   res.send("Hello World from Express serverless!");
 });
 
-// Function to connect to the MongoDB database
-const connectToDatabase = async () => {
-  await mongoose.connect(process.env["CHAT_APP_DATABASE_URL"]);
-};
-
-// GET /conversations - Fetch all conversations
+// GET /conversations - Fetch all conversations from the database
 app.get('/conversations', async (req, res) => {
   let conversations;
 
@@ -110,10 +107,9 @@ app.get('/conversations/:conversationId', async (req, res) => {
 });
 
 
-// POST /conversations/:conversationId/messages - Add a message to a conversation
+// POST /conversations/:conversationId/messages - Add a pair of messages (human and AI)
 app.post('/conversations/:conversationId/messages', async (req, res) => {
-  // const message = req.body.message;
-  const message = JSON.parse(req.body).message;
+  const message = req.body.message;
   const { conversationId } = req.params;
 
   if (!conversationId || !message) {
@@ -178,3 +174,8 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+// Helper function to connect to the mongo database
+const connectToDatabase = async () => {
+  await mongoose.connect(process.env["CHAT_APP_DATABASE_URL"]);
+};
