@@ -1,44 +1,12 @@
 import express from "express";
-import mongoose from "mongoose";
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { OpenAI } from 'openai';
+import { Request, Response } from 'express';
+import { connectToDatabase, Conversation, Message, mockConversations, mockMessages } from "./models";
 
 // Load environment variables from .env file
 dotenv.config();
-
-// Mongoose schemas
-const conversationSchema = new mongoose.Schema({
-  conversationId: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  createdAt: { type: Date, default: Date.now },
-});
-
-const messageSchema = new mongoose.Schema({
-  conversationId: String,
-  text: String,
-  author: String,
-  createdAt: { type: Date, default: Date.now },
-});
-
-// Mongoose models
-const Conversation = mongoose.model('Conversation', conversationSchema);
-const Message = mongoose.model('Message', messageSchema);
-
-// Mock data
-const mockConversations = [
-  { id: "1", name: "Conversation 1" },
-  { id: "2", name: "Conversation 2" },
-];
-
-const mockMessages = [
-  { id: "1", text: "Hello from Conversation 1!", agent: "ai", conversationId: "1" },
-  { id: "2", text: "Hi there, how are you?", agent: "human", conversationId: "1" },
-  { id: "3", text: "Hello from Conversation 2!", agent: "ai", conversationId: "2" },
-];
 
 // Express App Setup
 const app = express();
@@ -48,7 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 // GET / - Hello world endpoint
-app.get("/", (_req, res) => {
+app.get("/", (_req: Request, res: Response): void => {
   res.send("Hello World from Express serverless!");
 });
 
@@ -82,11 +50,11 @@ app.get('/conversations', async (req, res) => {
 });
 
 // GET /conversations/:conversationId - Fetch messages from a specific conversation
-app.get('/conversations/:conversationId', async (req, res) => {
+app.get('/conversations/:conversationId', async (req: Request, res:Response) => {
   const { conversationId } = req.params;
 
   if (!conversationId) {
-    return res.json({ message: "Missing conversationId" });
+    res.json({ message: "Missing conversationId" });
   }
 
   let messages;
@@ -108,12 +76,12 @@ app.get('/conversations/:conversationId', async (req, res) => {
 
 
 // POST /conversations/:conversationId/messages - Add a pair of messages (human and AI)
-app.post('/conversations/:conversationId/messages', async (req, res) => {
+app.post('/conversations/:conversationId/messages', async (req: Request, res:Response) => {
   const message = req.body.message;
   const { conversationId } = req.params;
 
   if (!conversationId || !message) {
-    return res.json({ message: "Missing conversationId or message" });
+    res.json({ message: "Missing conversationId or message" });
   }
 
   let answer;
@@ -175,7 +143,3 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-// Helper function to connect to the mongo database
-const connectToDatabase = async () => {
-  await mongoose.connect(process.env["CHAT_APP_DATABASE_URL"]);
-};
